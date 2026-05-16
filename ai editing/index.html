@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Editor Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-white min-h-screen flex flex-col items-center p-8">
+
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-indigo-400">AI Canvas Studio Pro</h1>
+        <p class="text-gray-400 text-sm">अपनी फोटो अपलोड करें और AI से एडिट करवाएं</p>
+    </header>
+
+    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Controls -->
+        <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 flex flex-col gap-4">
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">1. फोटो अपलोड करें</label>
+                <input type="file" id="imageInput" accept="image/*" class="w-full text-sm text-gray-400">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">2. मास्क (Mask) फोटो अपलोड करें</label>
+                <input type="file" id="maskInput" accept="image/*" class="w-full text-sm text-gray-400">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">3. आप क्या बदलना चाहते हैं? (Prompt)</label>
+                <textarea id="promptInput" placeholder="जैसे: Change shirt to a red jacket" class="w-full h-24 bg-gray-950 border border-gray-800 rounded p-2 text-sm text-white"></textarea>
+            </div>
+            <button id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded font-medium">AI Edit करें</button>
+        </div>
+
+        <!-- Result -->
+        <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 flex flex-col items-center justify-center min-h-[300px]">
+            <h3 class="text-sm font-semibold text-gray-400 mb-4">AI का रिज़ल्ट यहाँ दिखेगा:</h3>
+            <img id="resultImage" class="max-w-full hidden rounded shadow-xl" alt="Result">
+            <p id="loadingText" class="text-indigo-400 hidden">जादू हो रहा है... कृपया इंतज़ार करें...</p>
+        </div>
+    </div>
+
+    <script>
+        // 🛑 ध्यान दें: जब हम स्टेप 5 में बैकेंड लाइव करेंगे, तब यहाँ LOCALHOST की जगह असली लिंक डालेंगे!
+        const BACKEND_URL = "http://localhost:5000"; 
+
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const image = document.getElementById('imageInput').files[0];
+            const mask = document.getElementById('maskInput').files[0];
+            const prompt = document.getElementById('promptInput').value;
+
+            if (!image || !mask || !prompt) {
+                alert("कृपया दोनों फोटो और प्रॉम्ट भरें!");
+                return;
+            }
+
+            document.getElementById('loadingText').classList.remove('hidden');
+            document.getElementById('resultImage').classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('image', image);
+            formData.append('mask', mask);
+            formData.append('prompt', prompt);
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/edit-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const imgTag = document.getElementById('resultImage');
+                    imgTag.src = data.image;
+                    imgTag.classList.remove('hidden');
+                } else {
+                    alert("फेल हो गया: " + data.error);
+                }
+            } catch (err) {
+                alert("सर्वर से कनेक्ट नहीं हो पाया!");
+            } finally {
+                document.getElementById('loadingText').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
